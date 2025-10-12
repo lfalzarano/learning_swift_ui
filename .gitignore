@@ -1,5 +1,26 @@
-
+# Xcode
 *.xcuserstate
 xcuserdata/
+*.xcworkspace/xcuserdata/
+DerivedData/
+Build/
+*.pbxuser
+*.mode1v3
+*.mode2v3
+*.perspectivev3
+*.xcworkspace
+!*.xcworkspace/contents.xcworkspacedata
+
+# Swift
+.build/
+.swiftpm/
+
+# macOS
 .DS_Store
 
+# IDE
+.vscode/
+.idea/
+
+# Environment
+.env
