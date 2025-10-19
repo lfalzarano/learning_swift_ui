@@ -4,10 +4,17 @@ struct ContentView: View {
     @State private var countries = ["Estonia", "France", "Germany", "Ireland", "Italy", "Nigeria", "Poland", "Spain", "UK", "Ukraine", "US"].shuffled()
     
     @State private var correctAnswer = Int.random(in: 0...2)
-    
     @State private var showingScore: Bool = false
     @State private var scoreTitle: String = ""
     @State private var score: Int = 0
+    @State private var questionsAnswered: Int = 0
+    @State private var showingFinalScore: Bool = false
+    
+    let numberOfQuestions: Int = 8
+    
+    var questionRemaining: Int {
+        numberOfQuestions - self.questionsAnswered
+    }
     
     var body: some View {
         ZStack {
@@ -38,9 +45,7 @@ struct ContentView: View {
                     
                     ForEach(0..<3) { number in
                         Button {
-                            print("Button \(number) tapped")
-                            print(correctAnswer == number)
-                            fladTapped(number)
+                            flagTapped(number)
                         } label: {
                             Image(countries[number])
                         }
@@ -53,6 +58,13 @@ struct ContentView: View {
                 .background(.regularMaterial.opacity(0.5))
                 .clipShape(RoundedRectangle(cornerRadius: 40))
                 
+                Text("Questions Remaining: \(questionRemaining)")
+                    .frame(maxWidth: .infinity)
+                    .foregroundStyle(.secondary)
+                    .padding(10) // padding
+                    .background(.regularMaterial.opacity(0.5))
+                    .clipShape(Capsule())
+                    .padding(.top, 10) // only pad top so space to Score is equal to Guess the flag
                 
                 Spacer()
                 
@@ -65,32 +77,52 @@ struct ContentView: View {
             .padding(20)
         }
         .alert(scoreTitle, isPresented: $showingScore) {
+            Button("Next question") {
+                self.askAnotherQuestion()
+            }
+        } message: {
+            Text("Your score is: \(score)")
+        }
+        .alert("Game over!", isPresented: $showingFinalScore) {
             Button("Play again") {
-                self.startNewGame()
+                resetGame()
             }
         } message: {
             Text("Your score is: \(score)")
         }
     }
     
-    func fladTapped(_ number: Int) {
+    func flagTapped(_ number: Int) {
         if number == correctAnswer {
             scoreTitle = "Correct!"
             score += 1
         } else {
-            scoreTitle = "Wrong!"
+            scoreTitle = """
+            Wrong!
+            That's the flag of \(countries[correctAnswer])
+            """
         }
         
-        showingScore = true
+        questionsAnswered += 1
+        
+        if questionsAnswered >= numberOfQuestions {
+            showingFinalScore = true
+        } else {
+            showingScore = true
+        }
     }
     
-    func startNewGame() {
+    func askAnotherQuestion() {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
         showingScore = false
     }
     
-    
+    func resetGame() {
+        score = 0
+        questionsAnswered = 0
+        askAnotherQuestion()
+    }
 }
 
 #Preview {
