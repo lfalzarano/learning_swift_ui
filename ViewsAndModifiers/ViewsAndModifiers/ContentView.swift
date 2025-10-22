@@ -7,6 +7,21 @@
 
 import SwiftUI
 
+struct ProminentTitle: ViewModifier {
+    func body(content: Content) -> some View {
+        content
+            .font(.largeTitle)
+            .foregroundStyle(.blue)
+    }
+}
+
+extension View {
+    func prominentTitle() -> some View {
+        self.modifier(ProminentTitle())
+    }
+}
+
+
 //Here content is just a type. Similar to other languages where <T> is often used
 struct GridStack<Content: View>: View {
     let rows: Int
