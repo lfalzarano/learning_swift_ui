@@ -93,6 +93,9 @@ struct CapsuleText: View {
 
 struct ContentView: View {
     @State private var useWhiteText: Bool = false
+    @State private var val: String = "aasdf"
+    
+
     
     // Can create variables which are views
     var motto1: Text = Text("Swift is fun!")
@@ -110,14 +113,26 @@ struct ContentView: View {
         }
     }
     
+    var textBinding: Binding<String> {
+        Binding(
+            get: {self.val},
+            set: { (val: String) -> Void in
+                self.val = val
+            }
+        )
+    }
+    
     // cannot return just a View - Swift UI needs to know what kind of specific view
     // could type out the long Modified Content type
     // but it's easier to just say some View
     
     // if we create body with VStack, SwiftUI really creates a TupleView using ViewBuilder
     var body: some View {
-        ScrollView {
+        return ScrollView {
             VStack {
+                
+                TextField("My text field", text: $val)
+                    .border(Color.black)
                 
                 
                 //modifier order matters
