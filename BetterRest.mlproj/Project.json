@@ -1,0 +1,29 @@
+{
+  "activityEntities" : [
+    "projectCreated",
+    [
+      {
+        "createdDate" : "2025-10-24T06:24:36Z",
+        "event" : "projectCreated",
+        "id" : "7924B06F-0639-4CC7-8521-589ED7BC27C9",
+        "subtitle" : "BetterRest",
+        "title" : "Project Created"
+      }
+    ]
+  ],
+  "authorName" : "Logan Falzarano",
+  "createdDate" : "2025-10-24T06:24:36Z",
+  "description" : "",
+  "id" : "F60A7E8C-88C1-40D7-9B3D-A3D4AE1FEF0D",
+  "license" : "",
+  "location" : "",
+  "modifiedDate" : "2025-10-24T06:24:36Z",
+  "projectName" : "BetterRest",
+  "settingsEntity" : {
+    "snapshotOnExtendTraining" : true,
+    "snapshotOnResumeTraining" : false
+  },
+  "taskType" : "generalRegresor",
+  "title" : "Tabular Regression",
+  "version" : "1.1"
+}
