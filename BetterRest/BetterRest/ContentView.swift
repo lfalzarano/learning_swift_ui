@@ -13,9 +13,11 @@ struct ContentView: View {
     @State private var wakeUp: Date = defaultWakeUpTime
     @State private var coffeeAmount: Int = 1
     
-    @State private var alertTitle: String = ""
-    @State private var alertMessage: String = ""
-    @State private var showingAlert: Bool = false
+//    @State private var alertTitle: String = ""
+//    @State private var alertMessage: String = ""
+//    @State private var showingAlert: Bool = false
+    
+    var idealBedtimeString: String { calculateBedtime() } //must be computed not set
     
     //needed to compile, otherwise swift doesnt
     static var defaultWakeUpTime: Date {
@@ -47,24 +49,35 @@ struct ContentView: View {
                     Text("Daily coffee intake")
                         .font(.headline)
                     
-                    Stepper("^[\(coffeeAmount) cup](inflect: true)", value: $coffeeAmount, in: 1...20)
+                    Picker("^[\(coffeeAmount) cup](inflect: true)", selection: $coffeeAmount) {
+                        ForEach(1...20, id: \.self) { number in
+                            Text("\(number) cup")
+                        }
+                    }
+//                    Stepper("^[\(coffeeAmount) cup](inflect: true)", value: $coffeeAmount, in: 1...20)
+                }
+                
+                Section {
+                    Text(idealBedtimeString)
+                        .font(.largeTitle)
+                        .multilineTextAlignment(.center)
                 }
             }
             .navigationTitle(Text("BetterRest"))
-            .toolbar {
-                Button("Calculate") {
-                    calculateBedtime()
-                }
-            }
-            .alert(alertTitle, isPresented: $showingAlert) {
-                Button("OK") {}
-            } message: {
-                Text(alertMessage)
-            }
+//            .toolbar {
+//                Button("Calculate") {
+//                    calculateBedtime()
+//                }
+//            }
+//            .alert(alertTitle, isPresented: $showingAlert) {
+//                Button("OK") {}
+//            } message: {
+//                Text(alertMessage)
+//            }
         }
     }
     
-    func calculateBedtime() {
+    func calculateBedtime() -> String {
         do {
             let config = MLModelConfiguration()
             let model = try SleepCalculator(configuration: config)
@@ -79,13 +92,10 @@ struct ContentView: View {
                 coffee: Double(coffeeAmount))
             
             let sleepTime = wakeUp - prediction.actualSleep
-            alertMessage = "Your ideal bedtime is: \(sleepTime.formatted(date: .omitted, time: .shortened))"
+            return "Your ideal bedtime is: \(sleepTime.formatted(date: .omitted, time: .shortened))"
         } catch {
-            alertTitle = "Error"
-            alertMessage = "Sorry, there was a problem calculating your bedtime."
-            
+            return "Sorry, there was a problem calculating your bedtime."
         }
-        showingAlert.toggle()
     }
 }
 
