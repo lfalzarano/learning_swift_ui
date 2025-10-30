@@ -16,6 +16,8 @@ struct ContentView: View {
     @State private var errorMessage = ""
     @State private var showingError = false
     
+    @State private var score = 0
+    
     var body: some View {
         NavigationStack {
             List {
@@ -35,40 +37,71 @@ struct ContentView: View {
                 }
             }
             .navigationTitle(rootWord)
-            .onSubmit(addNewWord)
+            .onSubmit(onWordSubmit)
             .onAppear(perform: startGame)
             .alert(errorTitle, isPresented: $showingError) {
                 Button("OK") {}
             } message: {
                 Text(errorMessage)
             }
+            .toolbar {
+                ToolbarItem(placement: .principal) {
+                    Text("Score: \(score)")
+                }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("New Word") {
+                        startGame()
+                    }
+                }
+            }
         }
     }
     
-    func addNewWord() {
-        let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+    func isValidWord(_ answer: String) -> Bool {
         
-        guard answer.count > 0 else { return }
+        guard answer.count > 0 else { return false }
         
         guard isOriginal(word: answer) else {
             wordError(title: "Word used already", message: "Be more original")
-            return
+            return false
         }
 
         guard isPossible(word: answer) else {
             wordError(title: "Word not possible", message: "You can't spell that word from '\(rootWord)'!")
-            return
+            return false
         }
 
         guard isReal(word: answer) else {
             wordError(title: "Word not recognized", message: "You can't just make them up, you know!")
-            return
+            return false
         }
         
-        withAnimation {
-            usedWords.insert(answer, at: 0)
+        guard isSufficientlyLong(word: answer) else {
+            wordError(title: "Word too short", message: "Word must be at least 3 letters!")
+            return false
         }
-        newWord = ""
+        
+        guard isNotStartingWord(word: answer) else {
+            wordError(title: "Word is the starting word", message: "You can be more creative than that")
+            return false
+        }
+        
+        return true
+    }
+    
+    func wordScore(for word: String) -> Int {
+        word.count
+    }
+    
+    func onWordSubmit() {
+        let answer = newWord.lowercased().trimmingCharacters(in: .whitespacesAndNewlines)
+        if isValidWord(answer) {
+            withAnimation {
+                usedWords.insert(answer, at: 0)
+            }
+            score += wordScore(for: answer)
+            newWord = ""
+        }
     }
     
     func startGame() {
@@ -76,6 +109,8 @@ struct ContentView: View {
             if let startWords = try? String(contentsOf: startWordsURL, encoding: .utf8) {
                 let allWords = startWords.split(separator: "\n")
                 rootWord = String(allWords.randomElement() ?? "silkworm")
+                usedWords = []
+                score = 0
                 return
             }
         }
@@ -105,6 +140,14 @@ struct ContentView: View {
         let range = NSRange(location: 0, length: word.utf16.count)
         let misspelledRange = checker.rangeOfMisspelledWord(in: word, range: range, startingAt: 0, wrap: false, language: "en")
         return misspelledRange.location == NSNotFound
+    }
+    
+    func isSufficientlyLong(word: String) -> Bool {
+        word.count > 2
+    }
+    
+    func isNotStartingWord(word: String) -> Bool {
+        word != rootWord
     }
     
     func wordError(title: String, message: String) {
