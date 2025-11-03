@@ -19,6 +19,12 @@ struct ContentView: View {
     @State private var score: Int = 0
     @State private var questionsAnswered: Int = 0
     @State private var showingFinalScore: Bool = false
+    //separate variables to make tapped flag and non-tapped flag
+    //animations independent
+    @State private var tappedFlagRotationEffect: Int?
+    @State private var tappedFlagFadeEffect: Int?
+    @State private var spinAmount = 0.0
+    @State private var fadeFlag: Bool = false
     
     let numberOfQuestions: Int = 8
     
@@ -59,6 +65,9 @@ struct ContentView: View {
                         } label: {
                             FlagImage(country: countries[number])
                         }
+                        .rotation3DEffect(.degrees(tappedFlagRotationEffect == number ? spinAmount : 0), axis: (x: 0, y: 1, z: 0))
+                        .opacity(fadeFlag && tappedFlagFadeEffect != number ? 0.3 : 1.0)
+                        .scaleEffect(fadeFlag && tappedFlagFadeEffect != number ? 0.5 : 1.0)
                     }
                 }
                 .frame(maxWidth: .infinity)
@@ -101,6 +110,15 @@ struct ContentView: View {
     }
     
     func flagTapped(_ number: Int) {
+        tappedFlagRotationEffect = number
+        tappedFlagFadeEffect = number
+        
+        withAnimation {
+            spinAmount += 360
+        }
+        withAnimation {
+            fadeFlag = true
+        }
         if number == correctAnswer {
             scoreTitle = "Correct!"
             score += 1
@@ -124,11 +142,23 @@ struct ContentView: View {
         countries.shuffle()
         correctAnswer = Int.random(in: 0...2)
         showingScore = false
+        
+        withAnimation {
+            tappedFlagFadeEffect = nil
+            fadeFlag = false
+        }
+        
+        tappedFlagRotationEffect = nil
+        spinAmount = 0
     }
     
     func resetGame() {
         score = 0
         questionsAnswered = 0
+        tappedFlagFadeEffect = nil
+        tappedFlagRotationEffect = nil
+        spinAmount = 0
+        fadeFlag = false
         askAnotherQuestion()
     }
 }
