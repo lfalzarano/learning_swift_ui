@@ -13,6 +13,16 @@ struct ExpenseItem: Identifiable, Codable {
     let name: String
     let type: String
     let amount: Double
+    
+    var expenseColor: Color {
+        if amount < 10.0 {
+            Color.green
+        } else if amount < 100.0 {
+            Color.orange
+        } else {
+            Color.red
+        }
+    }
 }
 
 @Observable
@@ -32,8 +42,9 @@ class Expenses {
             if let decodedItems = try? JSONDecoder().decode([ExpenseItem].self, from: savedItems) {
                 items = decodedItems
             }
+        } else {
+            items = []
         }
-        items = []
     }
 }
 
@@ -42,23 +53,33 @@ struct ContentView: View {
     //@Observable checks if the data has changed
     @State private var expenses: Expenses = Expenses()
     @State private var showingAddExpenseView: Bool = false
+    var personalExpenses: [ExpenseItem] {
+        expenses.items.filter { $0.type == "Personal" }
+    }
+    var businessExpenses: [ExpenseItem] {
+        expenses.items.filter { $0.type == "Business" }
+    }
     
     var body: some View {
         NavigationStack {
             List {
-                ForEach(expenses.items) { item in
-                    HStack {
-                        VStack(alignment: .leading) {
-                            Text(item.name)
-                                .font(.headline)
-                            Text("\(item.type)")
-                                .font(.subheadline)
-                        }
-                        Spacer()
-                        Text(item.amount, format: .currency(code: "USD"))
+                Section("Personal Expenses") {
+                    ForEach(personalExpenses) { item in
+                        ExpenseRow(item: item)
+                    }
+                    .onDelete { offsets in
+                        removeItems(at: offsets, from: personalExpenses)
                     }
                 }
-                .onDelete(perform: removeItems)
+                
+                Section("Business Expenses") {
+                    ForEach(businessExpenses) { item in
+                        ExpenseRow(item: item)
+                    }
+                    .onDelete { offsets in
+                        removeItems(at: offsets, from: businessExpenses)
+                    }
+                }
             }
             .navigationTitle(Text("iExpenses"))
             .toolbar {
@@ -72,8 +93,30 @@ struct ContentView: View {
         })
     }
     
-    func removeItems(at offsets: IndexSet) {
-        expenses.items.remove(atOffsets: offsets)
+    func removeItems(at offsets: IndexSet, from filteredItems: [ExpenseItem]) {
+        for offset in offsets {
+            if let index = expenses.items.firstIndex(where: { $0.id == filteredItems[offset].id }) {
+                expenses.items.remove(at: index)
+            }
+        }
+    }
+}
+
+struct ExpenseRow : View {
+    var item: ExpenseItem
+    
+    var body: some View {
+        HStack {
+            VStack(alignment: .leading) {
+                Text(item.name)
+                    .font(.headline)
+                Text("\(item.type)")
+                    .font(.subheadline)
+            }
+            Spacer()
+            Text(item.amount, format: .currency(code: Locale.current.currency?.identifier ?? "USD"))
+                .foregroundStyle(item.expenseColor)
+        }
     }
 }
 

@@ -16,7 +16,7 @@ struct AddView: View {
     
     var expenses: Expenses
     
-    let types = ["Personal", "Business", "Gift"]
+    let types = ["Personal", "Business"]
     var body: some View {
         NavigationStack {
             Form {
