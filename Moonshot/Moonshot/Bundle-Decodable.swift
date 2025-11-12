@@ -8,7 +8,7 @@
 import Foundation
 
 extension Bundle {
-    func decode(_ file: String) -> [String: Astronaut] {
+    func decode<T: Codable>(_ file: String) -> T {
         guard let url = self.url(forResource: file, withExtension: nil) else {
             fatalError("Failed to locate \(file) in bundle.")
         }
@@ -18,10 +18,12 @@ extension Bundle {
         }
         
         let decoder = JSONDecoder()
-        
+        let formatter = DateFormatter()
+        formatter.dateFormat = "y-MM-dd"
+        decoder.dateDecodingStrategy = .formatted(formatter)
         
         do {
-            return try decoder.decode([String: Astronaut].self, from: data)
+            return try decoder.decode(T.self, from: data)
         } catch DecodingError.keyNotFound(let key, let context){
             fatalError("Failed to decode \(file) from bundle. Missing key: \(key) -  \(context)")
         } catch DecodingError.typeMismatch(let type, let context){
