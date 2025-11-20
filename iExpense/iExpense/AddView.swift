@@ -18,27 +18,41 @@ struct AddView: View {
     
     let types = ["Personal", "Business"]
     var body: some View {
-        NavigationStack {
-            Form {
-                TextField("Name", text: $name)
-                Picker("Type", selection: $type) {
-                    ForEach(types, id: \.self) {
-                        Text($0)
-                    }
+        
+        Form {
+            TextField("Name", text: $name)
+            Picker("Type", selection: $type) {
+                ForEach(types, id: \.self) {
+                    Text($0)
                 }
-                .pickerStyle(SegmentedPickerStyle())
-                TextField("Amount", value: $amount, format: .currency(code: "USD"))
-                    .keyboardType(.decimalPad)
             }
-            .navigationTitle(Text("Add New Expense"))
-            .toolbar {
-                Button("Add Expense") {
+            .pickerStyle(SegmentedPickerStyle())
+            TextField("Amount", value: $amount, format: .currency(code: "USD"))
+                .keyboardType(.decimalPad)
+        }
+        .navigationTitle(Text("Add New Expense"))
+        .toolbar {
+            
+            // 1. CONFIRM Button (Explicitly Trailing)
+            ToolbarItem(placement: .navigationBarTrailing) {
+                Button("Confirm Expense") {
                     let newExpense = ExpenseItem(name: name, type: type, amount: amount)
                     expenses.items.append(newExpense)
-                    dismiss() //better alternaitve to passing a closure to set the isShowingAddExpense
+                    dismiss()
+                }
+            }
+            
+            // 2. CANCEL Button (Explicitly Leading)
+            ToolbarItem(placement: .navigationBarLeading) {
+                Button("Cancel", role: .cancel) {
+                    dismiss()
                 }
             }
         }
+        .navigationBarBackButtonHidden(true)
+        
+    
+        
     }
 }
 

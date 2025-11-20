@@ -37,15 +37,16 @@ struct ContentView: View {
                         .foregroundStyle(.white)
                 }
             }
+            .navigationDestination(for: Mission.self) { missionTapped in // Navigates for both list view and grid view
+                MissionView(mission: missionTapped, astronauts: astronauts)
+            }
         }
     }
     
     var gridView: some View {
         LazyVGrid(columns: columns, spacing: 10) {
             ForEach(missions) { mission in
-                NavigationLink {
-                    MissionView(mission: mission, astronauts: astronauts)
-                } label: {
+                NavigationLink(value: mission) {
                     VStack {
                         Image(mission.image)
                             .resizable()
@@ -78,9 +79,7 @@ struct ContentView: View {
     var listView: some View {
         LazyVStack(spacing: 10) {
             ForEach(missions) { mission in
-                NavigationLink {
-                    MissionView(mission: mission, astronauts: astronauts)
-                } label: {
+                NavigationLink(value: mission) {
                     HStack {
                         Image(mission.image)
                             .resizable()

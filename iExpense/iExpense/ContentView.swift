@@ -52,7 +52,7 @@ struct ContentView: View {
     //@State keeps the object alive
     //@Observable checks if the data has changed
     @State private var expenses: Expenses = Expenses()
-    @State private var showingAddExpenseView: Bool = false
+//    @State private var showingAddExpenseView: Bool = false
     var personalExpenses: [ExpenseItem] {
         expenses.items.filter { $0.type == "Personal" }
     }
@@ -83,14 +83,17 @@ struct ContentView: View {
             }
             .navigationTitle(Text("iExpenses"))
             .toolbar {
-                Button("Add Expense", systemImage: "plus") {
-                    showingAddExpenseView.toggle()
+//                Button("Add Expense", systemImage: "plus") {
+//                    showingAddExpenseView.toggle()
+//                }
+                NavigationLink(destination: AddView(expenses: expenses)) {
+                    Text("Add Expense")
                 }
             }
         }
-        .sheet(isPresented: $showingAddExpenseView, content: {
-            AddView(expenses: expenses)
-        })
+//        .sheet(isPresented: $showingAddExpenseView, content: {
+//            AddView(expenses: expenses)
+//        })
     }
     
     func removeItems(at offsets: IndexSet, from filteredItems: [ExpenseItem]) {

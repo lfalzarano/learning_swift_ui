@@ -7,8 +7,8 @@
 
 import Foundation
 
-struct Mission: Codable, Identifiable {
-    struct CrewRole: Codable {
+struct Mission: Codable, Identifiable, Hashable {
+    struct CrewRole: Codable, Hashable { //inner property must be hashable to make out property hasable
         let name: String
         let role: String
     }
