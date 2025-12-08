@@ -1,14 +1,7 @@
-//
-//  Order.swift
-//  CupcakeCorner
-//
-//  Created by Logan Falzarano on 11/25/25.
-//
-
 import Foundation
 
 @Observable
-class Order : Codable{
+class Order: Codable {
     enum CodingKeys: String, CodingKey {
         case _type = "type"
         case _quantity = "quantity"
@@ -43,12 +36,17 @@ class Order : Codable{
     var zip = ""
     
     var hasValidAddress: Bool {
-        return !name.isEmpty && !streetAddress.isEmpty && !city.isEmpty && !zip.isEmpty
+        let allNonEmpty = !name.isEmpty && !streetAddress.isEmpty && !city.isEmpty && !zip.isEmpty
+        let oneAllWhiteSpace = name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        streetAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        city.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ||
+        zip.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        
+        return allNonEmpty && !oneAllWhiteSpace
     }
     
     var cost: Decimal {
         var cost = Decimal(quantity) * 2
-        
         cost += Decimal(type) / 2
         
         if extraFrosting {
@@ -60,5 +58,23 @@ class Order : Codable{
         }
         
         return cost
+    }
+    
+    // MARK: - UserDefaults persistence
+    
+    private static let saveKey = "SavedOrder"
+    
+    func save() {
+        if let encoded = try? JSONEncoder().encode(self) {
+            UserDefaults.standard.set(encoded, forKey: Order.saveKey)
+        }
+    }
+    
+    static func load() -> Order {
+        if let savedData = UserDefaults.standard.data(forKey: saveKey),
+           let decoded = try? JSONDecoder().decode(Order.self, from: savedData) {
+            return decoded
+        }
+        return Order()
     }
 }

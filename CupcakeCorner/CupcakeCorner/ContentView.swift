@@ -10,7 +10,7 @@ import SwiftUI
 
 
 struct ContentView: View {
-    @State private var order = Order()
+    @State private var order = Order.load()
     
     var body: some View {
         NavigationStack {
@@ -43,6 +43,9 @@ struct ContentView: View {
             }
             .animation(.default, value: order.specialRequestEnabled)
             .navigationTitle("Cupcake Corner")
+            .onDisappear {
+                order.save()  // Save when leaving this screen too
+            }
         }
     }
 }

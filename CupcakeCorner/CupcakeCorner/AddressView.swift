@@ -28,6 +28,9 @@ struct AddressView: View {
         }
         .navigationTitle("Delivery details")
         .navigationBarTitleDisplayMode(.inline)
+        .onDisappear {
+            order.save()  // Save when user leaves this screen
+        }
     }
 }
 

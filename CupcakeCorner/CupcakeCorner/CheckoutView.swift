@@ -12,6 +12,8 @@ struct CheckoutView: View {
     
     @State private var confirmationMessage = ""
     @State private var showingConfirmation = false
+    @State private var errorMessage = ""
+    @State private var showingError: Bool = false
     
     var body: some View {
         ScrollView {
@@ -43,27 +45,66 @@ struct CheckoutView: View {
         } message: {
             Text(confirmationMessage)
         }
+        .alert("There was an error", isPresented: $showingError) {
+            Button("OK") { }
+        } message: {
+            Text(errorMessage)
+        }
     }
     
     func placeOrder() async {
         guard let encoded = try? JSONEncoder().encode(order) else {
-            print("Failed to encode order")
+            errorMessage = "Failed to encode order data"
+            showingError = true
             return
         }
         
         let url = URL(string: "https://reqres.in/api/cupcakes")!
         var request = URLRequest(url: url)
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        request.httpMethod = "POST"
+        request.setValue("reqres-free-v1", forHTTPHeaderField: "X-API-Key")
+        request.httpMethod = "POST"  // Don't forget this!
         
         do {
-            let (data, _) = try await URLSession.shared.upload(for: request, from: encoded)
-            // Just check that we got a valid response - don't try to decode it
-            confirmationMessage = "Your order for \(order.quantity)x \(Order.types[order.type].lowercased()) cupcakes is on its way!"
+            let (data, response) = try await URLSession.shared.upload(for: request, from: encoded)
+            
+            // Check HTTP status code
+            guard let httpResponse = response as? HTTPURLResponse else {
+                errorMessage = "Invalid response from server"
+                showingError = true
+                return
+            }
+            
+            guard (200...299).contains(httpResponse.statusCode) else {
+                errorMessage = "Server error: HTTP \(httpResponse.statusCode)"
+                showingError = true
+                return
+            }
+            
+            let decodedOrder = try JSONDecoder().decode(Order.self, from: data)
+            confirmationMessage = "Your order for \(decodedOrder.quantity)x \(Order.types[decodedOrder.type].lowercased()) cupcakes is on its way!"
             showingConfirmation = true
             
+        } catch let decodingError as DecodingError {
+            errorMessage = "Failed to process server response"
+            showingError = true
+            print("Decoding error: \(decodingError)")
+        } catch let urlError as URLError {
+            switch urlError.code {
+            case .notConnectedToInternet:
+                errorMessage = "No internet connection"
+            case .timedOut:
+                errorMessage = "Request timed out"
+            case .cannotFindHost, .cannotConnectToHost:
+                errorMessage = "Cannot connect to server"
+            default:
+                errorMessage = "Network error: \(urlError.localizedDescription)"
+            }
+            showingError = true
         } catch {
-            print("Failed to place order: \(error.localizedDescription)")
+            errorMessage = "An unexpected error occurred"
+            showingError = true
+            print("Error: \(error)")
         }
     }
 }
