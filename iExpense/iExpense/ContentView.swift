@@ -6,13 +6,14 @@
 //
 
 import SwiftUI
-import Observation
+import SwiftData
 
-struct ExpenseItem: Identifiable, Codable {
-    var id: UUID = UUID() //gets create automatically in the initializer
-    let name: String
-    let type: String
-    let amount: Double
+@Model
+class ExpenseItem {
+
+    var name: String
+    var type: String
+    var amount: Double
     
     var expenseColor: Color {
         if amount < 10.0 {
@@ -23,86 +24,100 @@ struct ExpenseItem: Identifiable, Codable {
             Color.red
         }
     }
+    
+    init(name: String, type: String, amount: Double) {
+        self.name = name
+        self.type = type
+        self.amount = amount
+    }
 }
 
-@Observable
-class Expenses {
-    var items: [ExpenseItem] = [] {
-        didSet {
-            if let encoded = try? JSONEncoder().encode(items) {
-                UserDefaults.standard.set(encoded, forKey: "items")
-            }
-        }
-    }
+
+//@Model
+//class Expenses {
+//    var items: [ExpenseItem] = [ExpenseItem]()
+//    
+//    init() {}
+//}
+
+enum SortOption: String, CaseIterable, Identifiable {
+    case name = "Name"
+    case amount = "Amount"
     
-    init() {
-        if let savedItems = UserDefaults.standard.data(forKey: "items") {
-            //decoder an array of ExpenseItems because this type conforms to Codable
-            //.self refers to the type
-            if let decodedItems = try? JSONDecoder().decode([ExpenseItem].self, from: savedItems) {
-                items = decodedItems
-            }
-        } else {
-            items = []
+    var id: String { rawValue }
+    
+    // This is the "Magic" property that converts the choice into descriptors
+    var descriptors: [SortDescriptor<ExpenseItem>] {
+        switch self {
+        case .name:
+            return [SortDescriptor(\ExpenseItem.name), SortDescriptor(\ExpenseItem.amount)]
+        case .amount:
+            return [SortDescriptor(\ExpenseItem.amount, order: .reverse), SortDescriptor(\ExpenseItem.name)]
         }
     }
+}
+
+enum FilterOption: String, CaseIterable, Identifiable {
+    case all = "All"
+    case personal = "Personal"
+    case business = "Business"
+    
+    var id: String { rawValue }
 }
 
 struct ContentView: View {
     //@State keeps the object alive
     //@Observable checks if the data has changed
-    @State private var expenses: Expenses = Expenses()
+    @Environment(\.modelContext) var modelContext
+    @Query var expenses: [ExpenseItem]
 //    @State private var showingAddExpenseView: Bool = false
-    var personalExpenses: [ExpenseItem] {
-        expenses.items.filter { $0.type == "Personal" }
-    }
-    var businessExpenses: [ExpenseItem] {
-        expenses.items.filter { $0.type == "Business" }
-    }
+    
+    @State private var filterType: FilterOption = .all
+    @State private var sortOption: SortOption = .name
     
     var body: some View {
         NavigationStack {
-            List {
-                Section("Personal Expenses") {
-                    ForEach(personalExpenses) { item in
-                        ExpenseRow(item: item)
+            ExpensesList(sortOrder: sortOption.descriptors, filter: filterType)
+                .navigationTitle(Text("iExpenses"))
+                .toolbar {
+        //                Button("Add Expense", systemImage: "plus") {
+        //                    showingAddExpenseView.toggle()
+        //                }
+                    NavigationLink(destination: AddView()) {
+                        Text("Add Expense")
                     }
-                    .onDelete { offsets in
-                        removeItems(at: offsets, from: personalExpenses)
+                    
+                    Menu("Sort", systemImage: "arrow.up.arrow.down") {
+                        Picker("Sort", selection: $sortOption) {
+                            Text("Sort by Name").tag(SortOption.name)
+                            Text("Sort by Amount").tag(SortOption.amount)
+                        }
+                    }
+                    
+                    // 2. Filter Menu (Adding this so you can actually use your enum!)
+                    Menu("Filter", systemImage: "line.3.horizontal.decrease.circle") {
+                        Picker("Filter", selection: $filterType) {
+                            ForEach(FilterOption.allCases) { option in
+                                Text(option.rawValue).tag(option)
+                            }
+                        }
                     }
                 }
-                
-                Section("Business Expenses") {
-                    ForEach(businessExpenses) { item in
-                        ExpenseRow(item: item)
-                    }
-                    .onDelete { offsets in
-                        removeItems(at: offsets, from: businessExpenses)
-                    }
-                }
-            }
-            .navigationTitle(Text("iExpenses"))
-            .toolbar {
-//                Button("Add Expense", systemImage: "plus") {
-//                    showingAddExpenseView.toggle()
-//                }
-                NavigationLink(destination: AddView(expenses: expenses)) {
-                    Text("Add Expense")
-                }
-            }
         }
+        
 //        .sheet(isPresented: $showingAddExpenseView, content: {
 //            AddView(expenses: expenses)
 //        })
     }
     
-    func removeItems(at offsets: IndexSet, from filteredItems: [ExpenseItem]) {
-        for offset in offsets {
-            if let index = expenses.items.firstIndex(where: { $0.id == filteredItems[offset].id }) {
-                expenses.items.remove(at: index)
-            }
-        }
-    }
+//    func removeItems(at offsets: IndexSet, from filteredItems: [ExpenseItem]) {
+//        for offset in offsets {
+//            if let index = expenses.firstIndex(where: { $0.id == filteredItems[offset].id }) {
+//                expenses.remove(at: index)
+//            }
+//        }
+//    }
+    
 }
 
 struct ExpenseRow : View {
@@ -123,6 +138,6 @@ struct ExpenseRow : View {
     }
 }
 
-#Preview {
-    ContentView()
-}
+//#Preview {
+//    ContentView()
+//}
