@@ -5,17 +5,12 @@
 //  Created by Logan Falzarano on 12/23/25.
 //
 
-//
-//  ContentView.swift
-//  FriendsFaceFetcher
-//
-//  Created by Logan Falzarano on 12/23/25.
-//
-
 import SwiftUI
+import SwiftData
 
 struct ContentView: View {
-    @State private var users = [User]()
+    @Environment(\.modelContext) var modelContext
+    @Query(sort: \User.name) var users: [User]
 
     var body: some View {
         NavigationStack {
@@ -37,17 +32,28 @@ struct ContentView: View {
     }
 
     func fetchData() async {
-        guard users.isEmpty else { return }
-
-        do {
-            let dataService = DataService()
-            users = try await dataService.fetchUsers()
-        } catch {
-            print("Error fetching users: \(error)")
+        if users.isEmpty {
+            do {
+                let dataService = DataService()
+                let downloadedUsers = try await dataService.fetchUsers()
+                
+                for user in downloadedUsers {
+                    modelContext.insert(user)
+                }
+                
+            } catch {
+                print("Error fetching or saving users: \(error)")
+            }
         }
     }
 }
 
 #Preview {
-    ContentView()
+    do {
+        let container = try ModelContainer(for: User.self, configurations: ModelConfiguration(isStoredInMemoryOnly: true))
+        return ContentView()
+            .modelContainer(container)
+    } catch {
+        return Text("Failed to create container: \(error.localizedDescription)")
+    }
 }

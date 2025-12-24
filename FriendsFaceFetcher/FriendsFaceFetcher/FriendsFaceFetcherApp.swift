@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import SwiftData
 
 @main
 struct FriendsFaceFetcherApp: App {
@@ -13,5 +14,6 @@ struct FriendsFaceFetcherApp: App {
         WindowGroup {
             ContentView()
         }
+        .modelContainer(for: User.self)
     }
 }
